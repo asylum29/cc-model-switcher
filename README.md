@@ -7,20 +7,20 @@ CLI tool to switch Claude Code between AI models. Modifies `~/.claude/settings.j
 **npm (recommended):**
 
 ```bash
-npm install -g github:alvisx/cc-model-swither
+npm install -g github:alvisx/cc-model-switcher
 ```
 
 **curl:**
 
 ```bash
-curl -sL https://raw.githubusercontent.com/alvisx/cc-model-swither/main/install.sh | bash
+curl -sL https://raw.githubusercontent.com/alvisx/cc-model-switcher/main/install.sh | bash
 ```
 
 **Manual:**
 
 ```bash
-git clone https://github.com/alvisx/cc-model-swither.git
-ln -s $(pwd)/cc-model-swither/cc-model /usr/local/bin/cc-model
+git clone https://github.com/alvisx/cc-model-switcher.git
+ln -s $(pwd)/cc-model-switcher/cc-model /usr/local/bin/cc-model
 ```
 
 ## Usage

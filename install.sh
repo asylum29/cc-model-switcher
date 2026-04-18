@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="alvisx/cc-model-swither"
+REPO="alvisx/cc-model-switcher"
 BRANCH="main"
 BIN_NAME="cc-model"
 RAW_URL="https://raw.githubusercontent.com/${REPO}/${BRANCH}/${BIN_NAME}"
