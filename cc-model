@@ -3,17 +3,65 @@
 const fs = require("fs");
 const path = require("path");
 
+const readline = require("readline");
+
 const SETTINGS_PATH = path.join(process.env.HOME, ".claude", "settings.json");
-const PROFILES_PATH = path.join(process.env.HOME, ".cc-model", "profiles.json");
+const PROFILES_DIR = path.join(process.env.HOME, ".cc-model");
+const PROFILES_PATH = path.join(PROFILES_DIR, "profiles.json");
+
+const DEFAULT_PROFILES = {
+  glm: {
+    model: "glm-5.1",
+    env: {
+      ANTHROPIC_BASE_URL: "https://api.z.ai/api/anthropic",
+      API_TIMEOUT_MS: "3000000",
+    },
+  },
+  opus: {
+    model: "claude-opus-4-7",
+    env: {},
+  },
+};
+
+function ask(question) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => rl.question(question, (answer) => {
+    rl.close();
+    resolve(answer.trim());
+  }));
+}
+
+async function initProfiles() {
+  fs.mkdirSync(PROFILES_DIR, { recursive: true });
+
+  console.log("Первый запуск — настройка профиля GLM 5.1.\n");
+  const token = await ask("Введи API-ключ для ZhipuAI: ");
+
+  if (!token) {
+    console.error("Токен не указан. Прерываю.");
+    process.exit(1);
+  }
+
+  DEFAULT_PROFILES.glm.env.ANTHROPIC_AUTH_TOKEN = token;
+
+  fs.writeFileSync(PROFILES_PATH, JSON.stringify(DEFAULT_PROFILES, null, 2) + "\n");
+  console.log(`\nКонфиг создан: ${PROFILES_PATH}`);
+}
 
 function loadProfiles() {
   if (!fs.existsSync(PROFILES_PATH)) {
-    console.error(
-      `Конфиг не найден: ${PROFILES_PATH}\nСоздай его по шаблону из profiles.example.json`
-    );
-    process.exit(1);
+    return null;
   }
   return JSON.parse(fs.readFileSync(PROFILES_PATH, "utf-8"));
+}
+
+async function ensureProfiles() {
+  let profiles = loadProfiles();
+  if (!profiles) {
+    await initProfiles();
+    profiles = loadProfiles();
+  }
+  return profiles;
 }
 
 function readSettings() {
@@ -24,8 +72,7 @@ function writeSettings(settings) {
   fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + "\n");
 }
 
-function status() {
-  const profiles = loadProfiles();
+function status(profiles) {
   const settings = readSettings();
   const model = settings.model || "не указана";
   const baseUrl = settings.env?.ANTHROPIC_BASE_URL || "Anthropic API (по умолчанию)";
@@ -43,8 +90,7 @@ function status() {
   console.log(`API:        ${baseUrl}`);
 }
 
-function switchProfile(name) {
-  const profiles = loadProfiles();
+function switchProfile(profiles, name) {
   if (!profiles[name]) {
     console.error(
       `Профиль "${name}" не найден. Доступные: ${Object.keys(profiles).join(", ")}`
@@ -72,8 +118,7 @@ function switchProfile(name) {
   console.log("Перезапусти Claude Code для применения изменений.");
 }
 
-function listProfiles() {
-  const profiles = loadProfiles();
+function listProfiles(profiles) {
   const settings = readSettings();
   const currentModel = settings.model;
 
@@ -87,27 +132,10 @@ function listProfiles() {
 }
 
 // Main
-const [,, command, arg] = process.argv;
+(async () => {
+  const [,, command, arg] = process.argv;
 
-switch (command) {
-  case "switch":
-  case "use":
-    if (!arg) {
-      console.error("Укажи профиль: cc-model switch <name>");
-      process.exit(1);
-    }
-    switchProfile(arg);
-    break;
-  case "status":
-  case "current":
-    status();
-    break;
-  case "list":
-  case "profiles":
-    listProfiles();
-    break;
-  case "help":
-  default:
+  if (command === "help" || !command) {
     console.log("cc-model — переключатель моделей для Claude Code\n");
     console.log("Команды:");
     console.log("  switch <profile>  Переключить модель (алиас: use)");
@@ -118,4 +146,27 @@ switch (command) {
     console.log("  cc-model switch opus");
     console.log("  cc-model status");
     console.log("\nПосле switch перезапусти Claude Code.");
-}
+    return;
+  }
+
+  const profiles = await ensureProfiles();
+
+  switch (command) {
+    case "switch":
+    case "use":
+      if (!arg) {
+        console.error("Укажи профиль: cc-model switch <name>");
+        process.exit(1);
+      }
+      switchProfile(profiles, arg);
+      break;
+    case "status":
+    case "current":
+      status(profiles);
+      break;
+    case "list":
+    case "profiles":
+      listProfiles(profiles);
+      break;
+  }
+})();
