@@ -4,11 +4,11 @@
     "env": {
       "ANTHROPIC_AUTH_TOKEN": "token",
       "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
-      "API_TIMEOUT_MS": "3000000"
+      "API_TIMEOUT_MS": "3000000",
+      "HTTPS_PROXY": "http://proxy.example.com:8080"
     }
   },
   "opus": {
-    "model": "claude-opus-4-7",
-    "env": {}
+    "model": "claude-opus-4-7"
   }
 }

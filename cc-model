@@ -9,6 +9,14 @@ const SETTINGS_PATH = path.join(process.env.HOME, ".claude", "settings.json");
 const PROFILES_DIR = path.join(process.env.HOME, ".cc-model");
 const PROFILES_PATH = path.join(PROFILES_DIR, "profiles.json");
 
+const MANAGED_ENV_KEYS = [
+  "ANTHROPIC_AUTH_TOKEN",
+  "ANTHROPIC_BASE_URL",
+  "API_TIMEOUT_MS",
+  "HTTPS_PROXY",
+  "HTTP_PROXY",
+];
+
 const DEFAULT_PROFILES = {
   glm: {
     model: "glm-5.1",
@@ -19,7 +27,6 @@ const DEFAULT_PROFILES = {
   },
   opus: {
     model: "claude-opus-4-7",
-    env: {},
   },
 };
 
@@ -76,6 +83,7 @@ function status(profiles) {
   const settings = readSettings();
   const model = settings.model || "not set";
   const baseUrl = settings.env?.ANTHROPIC_BASE_URL || "Anthropic API (default)";
+  const proxy = settings.env?.HTTPS_PROXY || settings.env?.HTTP_PROXY;
 
   let profileName = "unknown";
   for (const [name, profile] of Object.entries(profiles)) {
@@ -88,6 +96,9 @@ function status(profiles) {
   console.log(`Model:      ${model}`);
   console.log(`Profile:    ${profileName}`);
   console.log(`API:        ${baseUrl}`);
+  if (proxy) {
+    console.log(`Proxy:      ${proxy}`);
+  }
 }
 
 function switchProfile(profiles, name) {
@@ -103,14 +114,20 @@ function switchProfile(profiles, name) {
 
   settings.model = profile.model;
 
-  // Remove custom env vars from previous profile
-  delete settings.env.ANTHROPIC_AUTH_TOKEN;
-  delete settings.env.ANTHROPIC_BASE_URL;
-  delete settings.env.API_TIMEOUT_MS;
+  // Ensure settings.env exists
+  if (!settings.env) {
+    settings.env = {};
+  }
 
-  // Add env vars from new profile
-  if (Object.keys(profile.env).length > 0) {
-    Object.assign(settings.env, profile.env);
+  // Remove all managed env vars from previous profile
+  for (const key of MANAGED_ENV_KEYS) {
+    delete settings.env[key];
+  }
+
+  // Add env vars from new profile (if any)
+  const env = profile.env || {};
+  if (Object.keys(env).length > 0) {
+    Object.assign(settings.env, env);
   }
 
   writeSettings(settings);
@@ -127,7 +144,9 @@ function listProfiles(profiles) {
     const active = profile.model === currentModel ? " <-- active" : "";
     const api =
       profile.env?.ANTHROPIC_BASE_URL || "Anthropic API (default)";
-    console.log(`  ${name.padEnd(6)} ${profile.model.padEnd(20)} ${api}${active}`);
+    const proxy = profile.env?.HTTPS_PROXY || profile.env?.HTTP_PROXY;
+    const proxyStr = proxy ? ` (proxy: ${proxy})` : "";
+    console.log(`  ${name.padEnd(6)} ${profile.model.padEnd(20)} ${api}${proxyStr}${active}`);
   }
 }
 

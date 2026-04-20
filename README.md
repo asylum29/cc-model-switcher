@@ -49,12 +49,14 @@ Add an entry to `~/.cc-model/profiles.json`:
   "model": "model-id",
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "token",
-    "ANTHROPIC_BASE_URL": "https://..."
+    "ANTHROPIC_BASE_URL": "https://...",
+    "HTTPS_PROXY": "http://proxy:8080",
+    "HTTP_PROXY": "http://proxy:8080"
   }
 }
 ```
 
-For models using the default Anthropic API, set `"env": {}`.
+For models using the default Anthropic API, the `env` field can be omitted entirely.
 
 ## Uninstall
 
