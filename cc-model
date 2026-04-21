@@ -10,6 +10,7 @@ const PROFILES_DIR = path.join(process.env.HOME, ".cc-model");
 const PROFILES_PATH = path.join(PROFILES_DIR, "profiles.json");
 
 const MANAGED_ENV_KEYS = [
+  "ANTHROPIC_API_KEY",
   "ANTHROPIC_AUTH_TOKEN",
   "ANTHROPIC_BASE_URL",
   "API_TIMEOUT_MS",

@@ -2,6 +2,7 @@
   "glm": {
     "model": "glm-5.1",
     "env": {
+      "ANTHROPIC_API_KEY": "api-key",
       "ANTHROPIC_AUTH_TOKEN": "token",
       "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
       "API_TIMEOUT_MS": "3000000",
